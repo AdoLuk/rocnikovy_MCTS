@@ -62,7 +62,18 @@ public class SedmaState implements GameState {
 
     @Override
     public List<Move> legalMoves() {
-        return List.of();
+        List<Move> legal = new ArrayList<>();
+        if (!playedCards.isEmpty() && startingPlayer == curPlayer) {
+            legal.add(new Move(curPlayer, FOLD));
+        }
+        for (int i = 0; i < 4; i++) {
+            if (curPlayer != startingPlayer ||
+                    playedCards.isEmpty() ||
+                    overtakes(hand.get(curPlayer).get(i))) {
+                legal.add(new Move(curPlayer, i));
+            }
+        }
+        return legal;
     }
 
     private boolean overtakes(Card c) {
