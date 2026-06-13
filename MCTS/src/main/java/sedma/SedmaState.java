@@ -1,6 +1,7 @@
 package sedma;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,20 +11,22 @@ import static sedma.Move.FOLD;
 public class SedmaState implements GameState {
     private List<Card> drawPile;
     private List<Card> playedCards;
-    private List<List<Card>> hand;
+    private List<List<Card>> hands;
     private List<Integer> points;
     private int curPlayer, startingPlayer;
 
     public SedmaState() {
-        List<Card> deck = getDeck();
-        Collections.shuffle(deck);
-        List<Card> hand0 = new ArrayList<>();
-        List<Card> hand1 = new ArrayList<>();
+        drawPile = getDeck();
+        Collections.shuffle(drawPile);
+        playedCards = new ArrayList<>();
+        hands = List.of(new ArrayList<>(), new ArrayList<>());
         for (int i = 0; i < 4; i++) {
-            hand0.add(deck.removeLast());
-            hand1.add(deck.removeLast());
+            hands.get(0).add(drawPile.removeLast());
+            hands.get(1).add(drawPile.removeLast());
         }
-        new SedmaState(deck, new ArrayList<>(), 0, hand0, hand1, List.of(0, 0));
+        points = Arrays.asList(0, 0);
+        curPlayer = 0;
+        startingPlayer = 0;
     }
 
     private SedmaState(List<Card> drawPile,
@@ -33,9 +36,9 @@ public class SedmaState implements GameState {
                       List<Card> hand1,
                       List<Integer> points) {
 
-        hand = new ArrayList<>();
-        hand.add(hand0); // player0's hand
-        hand.add(hand1); // player1's hand
+        hands = new ArrayList<>();
+        hands.add(hand0); // player0's hand
+        hands.add(hand1); // player1's hand
         this.points = points;
 
         this.drawPile = drawPile;
@@ -50,8 +53,8 @@ public class SedmaState implements GameState {
         return new SedmaState(List.copyOf(drawPile),
                               playedCards,
                               curPlayer,
-                              hand.get(0),
-                              hand.get(1),
+                              hands.get(0),
+                              hands.get(1),
                               List.copyOf(points));
     }
 
@@ -67,16 +70,17 @@ public class SedmaState implements GameState {
             legal.add(new Move(curPlayer, FOLD));
         }
         for (int i = 0; i < 4; i++) {
+            if(hands.get(curPlayer).get(i) == null) continue;
             if (curPlayer != startingPlayer ||
                     playedCards.isEmpty() ||
-                    overtakes(hand.get(curPlayer).get(i))) {
+                    overtakes(hands.get(curPlayer).get(i))) {
                 legal.add(new Move(curPlayer, i));
             }
         }
         return legal;
     }
 
-    private boolean overtakes(Card c) {
+    public boolean overtakes(Card c) {
         return playedCards.isEmpty() ||
                c.getRank() == playedCards.getFirst().getRank() ||
                c.getRank() == Card.Ranks.VII;
@@ -85,16 +89,16 @@ public class SedmaState implements GameState {
     @Override
     public boolean applyMove(Move move) {
         if (curPlayer != move.getPlayer() || // not your turn
-                ((move.action() < 0 || move.action() > 3) && move.action() != FOLD)) { // invalid action
+                ((move.getAction() < 0 || move.getAction() > 3) && move.getAction() != FOLD)) { // invalid action
             return false;
         }
 
-        if (move.action() == FOLD) { // starting player decided not to overtake his opponent (or cannot)
+        if (move.getAction() == FOLD) { // starting player decided not to overtake his opponent (or cannot)
             if (curPlayer != startingPlayer || playedCards.isEmpty()) return false; // player cannot fold
             int takingPlayer = 0;
             int countPoints = 0;
             for (int i = 0; i < playedCards.size(); i++) {
-                if (playedCards.get(i).getRank() == Card.Ranks.Ace ||
+                if (playedCards.get(i).getRank() == Card.Ranks.A ||
                         playedCards.get(i).getRank() == Card.Ranks.X) {
                     countPoints += 10;
                 } // counting valuable cards
@@ -106,11 +110,12 @@ public class SedmaState implements GameState {
 
             points.set(takingPlayer, points.get(takingPlayer) + countPoints);
             startingPlayer = takingPlayer;
+            curPlayer = startingPlayer;
             for (int i = 0; i < playedCards.size(); i++) {
                 if (drawPile.isEmpty()) break;
                 for (int j = 0; j < 4; j++) { // players alternate in drawing cards
-                    if (hand.get(i % 2).get(j) == null) {
-                        hand.get(i % 2).set(j, drawPile.removeLast());
+                    if (hands.get(i % 2).get(j) == null) {
+                        hands.get(i % 2).set(j, drawPile.removeLast());
                         break;
                     }
                 }
@@ -119,21 +124,41 @@ public class SedmaState implements GameState {
             return true;
         }
 
-        List<Card> curHand = hand.get(curPlayer);
-        if (curHand.get(move.action()) == null) {
+        List<Card> curHand = hands.get(curPlayer);
+        if (curHand.get(move.getAction()) == null) {
             return false; // invalid action
         }
 
         if (playedCards.isEmpty() || // starting player has to choose first card
                 curPlayer != startingPlayer || // the other player has to play any card
-                overtakes(curHand.get(move.action()))) { // if it is starting player's turn the only legal move is overtaking
-            playedCards.add(curHand.get(move.action()));
-            curHand.set(move.action(), null);
+                overtakes(curHand.get(move.getAction()))) { // if it is starting player's turn the only legal move is overtaking
+            playedCards.add(curHand.get(move.getAction()));
+            curHand.set(move.getAction(), null);
         } else {
             return false;
         }
 
         curPlayer = (curPlayer + 1) % 2;
         return true;
+    }
+
+    public boolean ended() {
+        for (int i = 0; i < 4; i++) {
+            if (hands.get(0).get(i) != null) return false;
+            if (hands.get(1).get(i) != null) return false;
+        }
+        return drawPile.isEmpty() && playedCards.isEmpty();
+    }
+
+    public int getScore(int player) {
+        return points.get(player);
+    }
+
+    public List<Card> getPlayedCards() {
+        return playedCards;
+    }
+
+    public List<Card> getCurHand() {
+        return hands.get(curPlayer);
     }
 }

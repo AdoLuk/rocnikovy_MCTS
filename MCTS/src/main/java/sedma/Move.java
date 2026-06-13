@@ -21,7 +21,12 @@ public class Move {
         return player;
     }
 
-    public int action() {
+    public int getAction() {
         return cardIdx;
+    }
+
+    @Override
+    public String toString() {
+        return "Move{pl=" + player + ", act=" + cardIdx + '}';
     }
 }

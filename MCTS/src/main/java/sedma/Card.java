@@ -16,10 +16,10 @@ public class Card {
         VIII,
         IX,
         X,
-        Jack,
-        Queen,
-        King,
-        Ace
+        J,
+        Q,
+        K,
+        A
     }
 
     private Suits suit;
@@ -30,14 +30,19 @@ public class Card {
         this.rank = rank;
     }
 
-    Suits getSuit() { return suit; }
-    Ranks getRank() { return rank; }
+    public Suits getSuit() { return suit; }
+    public Ranks getRank() { return rank; }
 
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Card)) return false;
         Card otherCard = (Card) other;
         return (this.suit == otherCard.getSuit()) && (this.rank == otherCard.getRank());
+    }
+
+    @Override
+    public String toString() {
+        return rank + "-" + suit;
     }
 
     public static List<Card> getDeck() {
