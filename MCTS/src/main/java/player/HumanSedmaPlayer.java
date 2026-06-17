@@ -43,6 +43,12 @@ public class HumanSedmaPlayer implements Player {
         while (true) {
             System.out.println("Choose your move (type 1-4 for cards or " + (Move.FOLD + 1) + " for folding): ");
             if (!sc.hasNextInt()) {
+                if (sc.hasNextLine()) {
+                    if (sc.next().equals("peek")) {
+                        System.out.println(gs);
+                    }
+                    continue;
+                }
                 System.out.println("Invalid action.");
                 sc.next();
                 continue;

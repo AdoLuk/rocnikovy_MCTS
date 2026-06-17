@@ -1,7 +1,6 @@
 package sedma;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,7 +23,8 @@ public class SedmaState implements GameState {
             hands.get(0).add(drawPile.removeLast());
             hands.get(1).add(drawPile.removeLast());
         }
-        points = Arrays.asList(0, 0);
+        points = new ArrayList<>();
+        points.add(0); points.add(0);
         curPlayer = 0;
         startingPlayer = 0;
     }
@@ -50,12 +50,57 @@ public class SedmaState implements GameState {
 
     @Override
     public GameState clone() {
-        return new SedmaState(List.copyOf(drawPile),
-                              playedCards,
+        List<Card> dpCopy = new ArrayList<>();
+        dpCopy.addAll(drawPile);
+        List<Card> pcCopy = new ArrayList<>();
+        pcCopy.addAll(playedCards);
+        List<Integer> ptsCopy = new ArrayList<>();
+        ptsCopy.addAll(points);
+        List<Card> h0Copy = new ArrayList<>();
+        h0Copy.addAll(hands.get(0));
+        List<Card> h1Copy = new ArrayList<>();
+        h1Copy.addAll(hands.get(1));
+        return new SedmaState(dpCopy,
+                              pcCopy,
                               curPlayer,
-                              hands.get(0),
-                              hands.get(1),
-                              List.copyOf(points));
+                              h0Copy,
+                              h1Copy,
+                              ptsCopy);
+    }
+
+    public GameState shuffleUnknowns() {
+        List<Card> unknowns = new ArrayList<>();
+        unknowns.addAll(drawPile);
+        int notNulls = 0;
+        for (Card c : hands.get(1 - curPlayer)) {
+            if (c != null) {
+                notNulls++;
+                unknowns.add(c);
+            }
+        }
+        Collections.shuffle(unknowns);
+        List<Card> unknownHand = new ArrayList<>();
+        for (int i = 0; i < notNulls; i++) unknownHand.add(unknowns.removeLast());
+        for (int i = 0; i < 4 - notNulls; i++) unknownHand.add(null);
+        List<Card> hand0, hand1;
+        if (curPlayer == 0) {
+            hand0 = hands.get(0);
+            hand1 = unknownHand;
+        } else {
+            hand0 = unknownHand;
+            hand1 = hands.get(1);
+        }
+        List<Card> pcCopy = new ArrayList<>();
+        pcCopy.addAll(playedCards);
+        List<Integer> ptsCopy = new ArrayList<>();
+        ptsCopy.addAll(points);
+        return new SedmaState(
+                unknowns,
+                pcCopy,
+                curPlayer,
+                hand0,
+                hand1,
+                ptsCopy);
     }
 
     @Override
@@ -138,7 +183,7 @@ public class SedmaState implements GameState {
             return false;
         }
 
-        curPlayer = (curPlayer + 1) % 2;
+        curPlayer = 1 - curPlayer;
         return true;
     }
 
@@ -160,5 +205,35 @@ public class SedmaState implements GameState {
 
     public List<Card> getCurHand() {
         return hands.get(curPlayer);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Current Player: " + curPlayer + "\n");
+        sb.append("Played cards:" + "\n");
+        for (Card card : playedCards) {
+            sb.append(card + "\n");
+        }
+        sb.append("Your cards:");
+        for (Card card : hands.get(curPlayer)) {
+            if (card == null) {
+                sb.append("        |");
+            } else {
+                sb.append(" " + card + " |");
+            }
+        }
+        sb.append("\n");
+        sb.append("Opponent's cards:");
+        for (Card card : hands.get(1 - curPlayer)) {
+            if (card == null) {
+                sb.append("        |");
+            } else {
+                sb.append(" " + card + " |");
+            }
+        }
+        sb.append("\n");
+        sb.append("Ended: " + ended() + "\n");
+        return sb.toString();
     }
 }

@@ -7,10 +7,10 @@ import sedma.SedmaState;
 
 import java.util.List;
 
-public class HeuristicSedmaPlayer2 implements Player {
-    RandomPlayer1 randomPlayer1;
-    public HeuristicSedmaPlayer2() {
-        randomPlayer1 = new RandomPlayer1();
+public class HeuristicSedmaPlayer implements Player {
+    RandomPlayer randomPlayer1;
+    public HeuristicSedmaPlayer() {
+        randomPlayer1 = new RandomPlayer();
     }
 
     private void makeRandomMove(GameState gs) {
@@ -35,6 +35,16 @@ public class HeuristicSedmaPlayer2 implements Player {
         }
         List<Card> myHand = ss.getCurHand();
 
+        if (playedCards.size() % 2 == 0 &&
+                !playedCards.isEmpty() &&
+                !ss.overtakes(playedCards.getLast())) {
+            for (Card card : playedCards) {
+                if ((card.getRank() == Card.Ranks.X || card.getRank() == Card.Ranks.A) &&
+                        ss.applyMove(new Move(ss.getCurrentPlayer(), Move.FOLD))) {
+                    return;
+                }
+            }
+        }
 
         if(firstRank == Card.Ranks.X || firstRank == Card.Ranks.A) {
             for (Move m : legalMoves) {
@@ -77,6 +87,6 @@ public class HeuristicSedmaPlayer2 implements Player {
 
     @Override
     public String getStrategyName() {
-        return "HeuristicPlayer2";
+        return "HeuristicPlayer";
     }
 }

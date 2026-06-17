@@ -29,4 +29,10 @@ public class Move {
     public String toString() {
         return "Move{pl=" + player + ", act=" + cardIdx + '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Move m)) return false;
+        return m.getPlayer() == player && m.getAction() == cardIdx;
+    }
 }

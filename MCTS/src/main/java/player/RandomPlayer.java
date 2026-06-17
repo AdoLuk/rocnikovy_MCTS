@@ -6,12 +6,12 @@ import sedma.Move;
 import java.util.List;
 import java.util.Random;
 
-public class RandomPlayer2 implements Player {
+public class RandomPlayer implements Player {
     private Random rand;
-    public RandomPlayer2() {
+    public RandomPlayer() {
         rand = new Random();
     }
-    public RandomPlayer2(long seed) {
+    public RandomPlayer(long seed) {
         rand = new Random(seed);
     }
 
@@ -19,9 +19,6 @@ public class RandomPlayer2 implements Player {
         List<Move> legalMoves = gs.legalMoves();
         if (legalMoves.isEmpty()) {
             throw new IllegalStateException("No valid moves found.");
-        }
-        if (rand.nextBoolean() && gs.applyMove(new Move(gs.getCurrentPlayer(), Move.FOLD))) {
-            return;
         }
         int index = rand.nextInt(legalMoves.size());
         if (!gs.applyMove(legalMoves.get(index))) {
@@ -31,6 +28,6 @@ public class RandomPlayer2 implements Player {
 
     @Override
     public String getStrategyName() {
-        return "RandomPlayer2";
+        return "RandomPlayer";
     }
 }
